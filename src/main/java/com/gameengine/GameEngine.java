@@ -65,7 +65,7 @@ public class GameEngine {
         if (window.isKeyPressed(GLFW_KEY_ESCAPE)) {
             window.setShouldClose(true);
         }
-        if (window.isKeyPressed(GLFW_KEY_T)) {
+        if (window.isKeyJustPressed(GLFW_KEY_T)) {
             startCollisionTest();
         }
     }

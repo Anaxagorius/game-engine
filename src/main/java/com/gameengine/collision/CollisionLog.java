@@ -12,6 +12,7 @@ public class CollisionLog {
 
     private static final Logger logger = LoggerFactory.getLogger(CollisionLog.class);
     private static final List<String> logs = new ArrayList<>();
+    private static final List<String> unmodifiableLogs = Collections.unmodifiableList(logs);
 
     private CollisionLog() {}
 
@@ -26,7 +27,7 @@ public class CollisionLog {
     }
 
     public static List<String> getLogs() {
-        return Collections.unmodifiableList(logs);
+        return unmodifiableLogs;
     }
 
     public static void clear() {

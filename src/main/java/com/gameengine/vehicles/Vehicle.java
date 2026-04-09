@@ -67,11 +67,12 @@ public abstract class Vehicle extends GameItem {
     }
 
     public void accelerate(Vector3f direction) {
-        Vector3f norm = new Vector3f(direction);
-        if (norm.lengthSquared() > 0) {
-            norm.normalize();
+        Vector3f inc = new Vector3f(direction);
+        if (inc.lengthSquared() > 0) {
+            inc.normalize();
         }
-        velocity.add(norm.mul(acceleration));
+        inc.mul(acceleration);
+        velocity.add(inc);
         if (velocity.length() > MAX_SPEED) {
             velocity.normalize(MAX_SPEED, velocity);
         }

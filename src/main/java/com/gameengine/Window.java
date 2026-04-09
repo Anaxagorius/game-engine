@@ -21,6 +21,7 @@ public class Window {
     private final int height;
     private final String title;
     private final Set<Integer> pressedKeys = new HashSet<>();
+    private final Set<Integer> justPressedKeys = new HashSet<>();
     private double mouseX;
     private double mouseY;
 
@@ -52,6 +53,7 @@ public class Window {
         glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
             if (action == GLFW_PRESS) {
                 pressedKeys.add(key);
+                justPressedKeys.add(key);
             } else if (action == GLFW_RELEASE) {
                 pressedKeys.remove(key);
             }
@@ -83,6 +85,7 @@ public class Window {
     }
 
     public void update() {
+        justPressedKeys.clear();
         glfwSwapBuffers(windowHandle);
         glfwPollEvents();
     }
@@ -98,6 +101,10 @@ public class Window {
 
     public boolean isKeyPressed(int key) {
         return pressedKeys.contains(key);
+    }
+
+    public boolean isKeyJustPressed(int key) {
+        return justPressedKeys.contains(key);
     }
 
     public boolean shouldClose() {
