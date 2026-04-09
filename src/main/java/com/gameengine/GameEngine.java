@@ -32,7 +32,7 @@ public class GameEngine {
         window.init();
 
         renderer = new Renderer();
-        renderer.init();
+        renderer.init(window);
 
         camera = new Camera();
         scene = new Scene();

@@ -73,7 +73,7 @@ public abstract class Vehicle extends GameItem {
         }
         velocity.add(norm.mul(acceleration));
         if (velocity.length() > MAX_SPEED) {
-            velocity.normalize().mul(MAX_SPEED);
+            velocity.normalize(MAX_SPEED, velocity);
         }
     }
 

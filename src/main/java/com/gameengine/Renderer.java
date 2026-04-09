@@ -8,8 +8,10 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 public class Renderer {
 
     private ShaderProgram shaderProgram;
+    private Window window;
 
-    public void init() {
+    public void init(Window window) {
+        this.window = window;
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         shaderProgram = new ShaderProgram("/shaders/vertex.glsl", "/shaders/fragment.glsl");
@@ -20,7 +22,7 @@ public class Renderer {
 
         shaderProgram.bind();
 
-        Matrix4f projMatrix = camera.getProjectionMatrix(60f, 800f, 600f);
+        Matrix4f projMatrix = camera.getProjectionMatrix(60f, window.getWidth(), window.getHeight());
         Matrix4f viewMatrix = camera.getViewMatrix();
 
         shaderProgram.setUniform("projMatrix", projMatrix);
