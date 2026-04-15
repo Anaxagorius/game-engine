@@ -11,24 +11,25 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
 
     private long windowHandle;
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
     private final String title;
-    private final Set<Integer> pressedKeys = new HashSet<>();
+    private final Set<Integer> pressedKeys    = new HashSet<>();
     private final Set<Integer> justPressedKeys = new HashSet<>();
     private double mouseX;
     private double mouseY;
 
     public Window(int width, int height, String title) {
-        this.width = width;
+        this.width  = width;
         this.height = height;
-        this.title = title;
+        this.title  = title;
     }
 
     public void init() {
@@ -39,11 +40,11 @@ public class Window {
         }
 
         glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_VISIBLE,               GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE,             GLFW_TRUE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE,        GLFW_OPENGL_CORE_PROFILE);
 
         windowHandle = glfwCreateWindow(width, height, title, NULL, NULL);
         if (windowHandle == NULL) {
@@ -64,15 +65,21 @@ public class Window {
             mouseY = ypos;
         });
 
+        glfwSetFramebufferSizeCallback(windowHandle, (window, w, h) -> {
+            this.width  = w;
+            this.height = h;
+            glViewport(0, 0, w, h);
+        });
+
         try (MemoryStack stack = stackPush()) {
-            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pWidth  = stack.mallocInt(1);
             IntBuffer pHeight = stack.mallocInt(1);
             glfwGetWindowSize(windowHandle, pWidth, pHeight);
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             if (vidmode != null) {
                 glfwSetWindowPos(
                         windowHandle,
-                        (vidmode.width() - pWidth.get(0)) / 2,
+                        (vidmode.width()  - pWidth.get(0))  / 2,
                         (vidmode.height() - pHeight.get(0)) / 2
                 );
             }
@@ -97,6 +104,10 @@ public class Window {
         if (cb != null) {
             cb.free();
         }
+    }
+
+    public void setTitle(String title) {
+        glfwSetWindowTitle(windowHandle, title);
     }
 
     public boolean isKeyPressed(int key) {

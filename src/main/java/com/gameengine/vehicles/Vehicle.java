@@ -8,8 +8,8 @@ import org.joml.Vector4f;
 
 public abstract class Vehicle extends GameItem {
 
-    protected static final Mesh CAR_MESH = Mesh.createBox(1.5f, 0.75f, 3.0f);
-    protected static final Mesh PLANE_MESH = Mesh.createBox(3.0f, 0.5f, 2.0f);
+    protected static final Mesh CAR_MESH   = Mesh.createBox(1.5f, 0.75f, 3.0f);
+    protected static final Mesh PLANE_MESH = Mesh.createBox(3.0f, 0.5f,  2.0f);
 
     protected final Vector3f velocity;
     protected float speed;
@@ -17,19 +17,32 @@ public abstract class Vehicle extends GameItem {
     protected float gravity = 9.8f;
     protected boolean onGround;
 
-    private static final float MAX_SPEED = 20.0f;
+    private static final float MAX_SPEED      = 20.0f;
+    private static final float FLASH_DURATION = 0.35f;
+
+    private final Vector4f baseColor;
+    private float flashTimer = 0f;
 
     public Vehicle(Mesh mesh, Vector4f color) {
         super(mesh, color);
-        this.velocity = new Vector3f(0, 0, 0);
-        this.speed = 0f;
+        this.baseColor    = new Vector4f(color);
+        this.velocity     = new Vector3f(0, 0, 0);
+        this.speed        = 0f;
         this.acceleration = 5.0f;
-        this.onGround = false;
+        this.onGround     = false;
     }
 
     public abstract void updateMovement(float deltaTime);
 
     public void update(float deltaTime) {
+        // Tick the collision flash
+        if (flashTimer > 0f) {
+            flashTimer -= deltaTime;
+            if (flashTimer <= 0f) {
+                flashTimer = 0f;
+                getColor().set(baseColor);
+            }
+        }
         updateMovement(deltaTime);
     }
 
@@ -50,6 +63,11 @@ public abstract class Vehicle extends GameItem {
     }
 
     public void onCollision(Vehicle other) {
+        // Flash white; baseColor was captured at construction and never changes
+        flashTimer = FLASH_DURATION;
+        getColor().set(1f, 1f, 1f, 1f);
+
+        // Reverse velocity component with smallest overlap
         float[] a = this.getBounds();
         float[] b = other.getBounds();
 

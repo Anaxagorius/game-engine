@@ -13,6 +13,9 @@ public class GameEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(GameEngine.class);
 
+    private static final float CAMERA_SPEED     = 10f;
+    private static final float CAMERA_ROT_SPEED = 60f;
+
     private Window window;
     private Renderer renderer;
     private Scene scene;
@@ -20,6 +23,8 @@ public class GameEngine {
     private GameGui gui;
 
     private long lastTime;
+    private int   fpsFrameCount;
+    private float fpsTimer;
 
     public void run() {
         init();
@@ -35,7 +40,7 @@ public class GameEngine {
         renderer.init(window);
 
         camera = new Camera();
-        scene = new Scene();
+        scene  = new Scene();
 
         // Ground plane
         Mesh groundMesh = Mesh.createBox(22f, 0.1f, 22f);
@@ -55,19 +60,38 @@ public class GameEngine {
             float deltaTime = (now - lastTime) / 1_000_000_000f;
             lastTime = now;
 
-            processInput();
+            processInput(deltaTime);
             update(deltaTime);
             render();
         }
     }
 
-    private void processInput() {
+    private void processInput(float deltaTime) {
         if (window.isKeyPressed(GLFW_KEY_ESCAPE)) {
             window.setShouldClose(true);
         }
         if (window.isKeyJustPressed(GLFW_KEY_T)) {
             startCollisionTest();
         }
+        if (window.isKeyJustPressed(GLFW_KEY_F)) {
+            renderer.toggleWireframe();
+        }
+
+        // Camera translation – WASD + Q/E
+        float camSpeed = CAMERA_SPEED * deltaTime;
+        if (window.isKeyPressed(GLFW_KEY_W)) camera.moveForward(camSpeed);
+        if (window.isKeyPressed(GLFW_KEY_S)) camera.moveBackward(camSpeed);
+        if (window.isKeyPressed(GLFW_KEY_A)) camera.strafeLeft(camSpeed);
+        if (window.isKeyPressed(GLFW_KEY_D)) camera.strafeRight(camSpeed);
+        if (window.isKeyPressed(GLFW_KEY_Q)) camera.moveUp(camSpeed);
+        if (window.isKeyPressed(GLFW_KEY_E)) camera.moveDown(camSpeed);
+
+        // Camera rotation – arrow keys
+        float rotSpeed = CAMERA_ROT_SPEED * deltaTime;
+        if (window.isKeyPressed(GLFW_KEY_UP))    camera.adjustPitch(-rotSpeed);
+        if (window.isKeyPressed(GLFW_KEY_DOWN))  camera.adjustPitch(rotSpeed);
+        if (window.isKeyPressed(GLFW_KEY_LEFT))  camera.adjustYaw(-rotSpeed);
+        if (window.isKeyPressed(GLFW_KEY_RIGHT)) camera.adjustYaw(rotSpeed);
     }
 
     private void startCollisionTest() {
@@ -99,6 +123,17 @@ public class GameEngine {
 
     private void update(float deltaTime) {
         scene.update(deltaTime);
+
+        // FPS counter – update window title once per second
+        fpsFrameCount++;
+        fpsTimer += deltaTime;
+        if (fpsTimer >= 1.0f) {
+            int fps = Math.round(fpsFrameCount / fpsTimer);
+            window.setTitle("3D Game Engine | FPS: " + fps
+                    + (renderer.isWireframe() ? " [Wireframe]" : ""));
+            fpsFrameCount = 0;
+            fpsTimer = 0f;
+        }
     }
 
     private void render() {
