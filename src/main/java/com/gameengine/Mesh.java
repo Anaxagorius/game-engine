@@ -30,32 +30,54 @@ public class Mesh {
         float hh = height / 2f;
         float hd = depth / 2f;
 
-        float[] vertices = {
-            // Front face
-            -hw, -hh,  hd,
-             hw, -hh,  hd,
-             hw,  hh,  hd,
-            -hw,  hh,  hd,
-            // Back face
-            -hw, -hh, -hd,
-             hw, -hh, -hd,
-             hw,  hh, -hd,
-            -hw,  hh, -hd,
+        // 6 faces × 4 vertices × 6 floats (xyz + nxnynz) = 144 floats
+        // Each face has its own duplicated vertices so flat normals are correct.
+        float[] vertexData = {
+            // Front (+Z)
+            -hw, -hh,  hd,  0, 0, 1,
+             hw, -hh,  hd,  0, 0, 1,
+             hw,  hh,  hd,  0, 0, 1,
+            -hw,  hh,  hd,  0, 0, 1,
+            // Back (-Z)
+             hw, -hh, -hd,  0, 0,-1,
+            -hw, -hh, -hd,  0, 0,-1,
+            -hw,  hh, -hd,  0, 0,-1,
+             hw,  hh, -hd,  0, 0,-1,
+            // Left (-X)
+            -hw, -hh, -hd, -1, 0, 0,
+            -hw, -hh,  hd, -1, 0, 0,
+            -hw,  hh,  hd, -1, 0, 0,
+            -hw,  hh, -hd, -1, 0, 0,
+            // Right (+X)
+             hw, -hh,  hd,  1, 0, 0,
+             hw, -hh, -hd,  1, 0, 0,
+             hw,  hh, -hd,  1, 0, 0,
+             hw,  hh,  hd,  1, 0, 0,
+            // Top (+Y)
+            -hw,  hh,  hd,  0, 1, 0,
+             hw,  hh,  hd,  0, 1, 0,
+             hw,  hh, -hd,  0, 1, 0,
+            -hw,  hh, -hd,  0, 1, 0,
+            // Bottom (-Y)
+            -hw, -hh, -hd,  0,-1, 0,
+             hw, -hh, -hd,  0,-1, 0,
+             hw, -hh,  hd,  0,-1, 0,
+            -hw, -hh,  hd,  0,-1, 0,
         };
 
         int[] indices = {
             // Front
-            0, 1, 2, 2, 3, 0,
+             0,  1,  2,  2,  3,  0,
             // Back
-            5, 4, 7, 7, 6, 5,
+             4,  5,  6,  6,  7,  4,
             // Left
-            4, 0, 3, 3, 7, 4,
+             8,  9, 10, 10, 11,  8,
             // Right
-            1, 5, 6, 6, 2, 1,
+            12, 13, 14, 14, 15, 12,
             // Top
-            3, 2, 6, 6, 7, 3,
+            16, 17, 18, 18, 19, 16,
             // Bottom
-            4, 5, 1, 1, 0, 4,
+            20, 21, 22, 22, 23, 20,
         };
 
         int vaoId = glGenVertexArrays();
@@ -63,16 +85,23 @@ public class Mesh {
 
         int vboId;
         int eboId;
+        int stride = 6 * Float.BYTES;
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer vertexBuffer = stack.mallocFloat(vertices.length);
-            vertexBuffer.put(vertices).flip();
+            FloatBuffer vertexBuffer = stack.mallocFloat(vertexData.length);
+            vertexBuffer.put(vertexData).flip();
 
             vboId = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+
+            // Position attribute (location 0)
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
             glEnableVertexAttribArray(0);
+
+            // Normal attribute (location 1)
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, (long) 3 * Float.BYTES);
+            glEnableVertexAttribArray(1);
 
             IntBuffer indexBuffer = stack.mallocInt(indices.length);
             indexBuffer.put(indices).flip();
@@ -94,6 +123,7 @@ public class Mesh {
     }
 
     public void cleanup() {
+        glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         for (int vboId : vboIds) {

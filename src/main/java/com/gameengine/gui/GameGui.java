@@ -7,6 +7,7 @@ import com.gameengine.vehicles.Car;
 import com.gameengine.vehicles.Plane;
 import com.gameengine.vehicles.Vehicle;
 import imgui.ImGui;
+import imgui.flag.ImGuiCond;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
@@ -22,11 +23,11 @@ public class GameGui {
     private Vehicle lastVehicle;
 
     private final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
-    private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
+    private final ImGuiImplGl3  imGuiGl3  = new ImGuiImplGl3();
     private final Random random = new Random();
 
     public GameGui(Scene scene, Window window) {
-        this.scene = scene;
+        this.scene  = scene;
         this.window = window;
     }
 
@@ -40,9 +41,9 @@ public class GameGui {
         imGuiGlfw.newFrame();
         ImGui.newFrame();
 
-        // Vehicle Controls Panel
-        ImGui.setNextWindowPos(10, 10, imgui.flag.ImGuiCond.Always);
-        ImGui.setNextWindowSize(250, 400, imgui.flag.ImGuiCond.Always);
+        // ── Vehicle Controls Panel ────────────────────────────────────
+        ImGui.setNextWindowPos(10, 10, ImGuiCond.Always);
+        ImGui.setNextWindowSize(260, 440, ImGuiCond.Always);
         ImGui.begin("Vehicle Controls", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
 
         if (ImGui.button("Add Car")) {
@@ -56,6 +57,8 @@ public class GameGui {
             scene.addItem(car);
             lastVehicle = car;
         }
+
+        ImGui.sameLine();
 
         if (ImGui.button("Add Plane")) {
             Plane plane = new Plane();
@@ -76,52 +79,53 @@ public class GameGui {
             lastVehicle = null;
         }
 
+        // Vehicle stats
+        ImGui.separator();
+        long carCount   = scene.getVehicles().stream().filter(v -> v instanceof Car).count();
+        long planeCount = scene.getVehicles().stream().filter(v -> v instanceof Plane).count();
+        ImGui.text(String.format("Cars: %d   Planes: %d   Total: %d",
+                carCount, planeCount, scene.getVehicles().size()));
+
+        // Last-vehicle controls
         ImGui.separator();
         ImGui.text("Last Vehicle Controls:");
 
         if (ImGui.button("Faster")) {
             if (lastVehicle != null) {
                 Vector3f vel = lastVehicle.getVelocity();
-                Vector3f dir;
-                if (vel.lengthSquared() > 0.001f) {
-                    dir = new Vector3f(vel).normalize();
-                } else {
-                    dir = new Vector3f(0, 0, -1);
-                }
+                Vector3f dir = vel.lengthSquared() > 0.001f
+                        ? new Vector3f(vel).normalize()
+                        : new Vector3f(0, 0, -1);
                 lastVehicle.accelerate(dir);
             }
         }
-
+        ImGui.sameLine();
         if (ImGui.button("Slower")) {
             if (lastVehicle != null) {
                 lastVehicle.getVelocity().mul(0.8f);
             }
         }
 
-        if (ImGui.button("Left")) {
-            if (lastVehicle != null) {
-                lastVehicle.accelerate(new Vector3f(-1, 0, 0));
-            }
+        if (ImGui.button("Left"))  { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f(-1, 0,  0)); }
+        ImGui.sameLine();
+        if (ImGui.button("Right")) { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f( 1, 0,  0)); }
+        ImGui.sameLine();
+        if (ImGui.button("Fwd"))   { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f( 0, 0, -1)); }
+        ImGui.sameLine();
+        if (ImGui.button("Back"))  { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f( 0, 0,  1)); }
+
+        if (ImGui.button("Up"))   { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f(0,  1, 0)); }
+        ImGui.sameLine();
+        if (ImGui.button("Down")) { if (lastVehicle != null) lastVehicle.accelerate(new Vector3f(0, -1, 0)); }
+
+        if (lastVehicle != null) {
+            Vector3f p = lastVehicle.getPosition();
+            Vector3f v = lastVehicle.getVelocity();
+            ImGui.text(String.format("Pos: (%.1f, %.1f, %.1f)", p.x, p.y, p.z));
+            ImGui.text(String.format("Vel: (%.2f, %.2f, %.2f)", v.x, v.y, v.z));
         }
 
-        if (ImGui.button("Right")) {
-            if (lastVehicle != null) {
-                lastVehicle.accelerate(new Vector3f(1, 0, 0));
-            }
-        }
-
-        if (ImGui.button("Up")) {
-            if (lastVehicle != null) {
-                lastVehicle.accelerate(new Vector3f(0, 1, 0));
-            }
-        }
-
-        if (ImGui.button("Down")) {
-            if (lastVehicle != null) {
-                lastVehicle.accelerate(new Vector3f(0, -1, 0));
-            }
-        }
-
+        // Collision log
         ImGui.separator();
         ImGui.text("Collision Log:");
 
@@ -133,13 +137,21 @@ public class GameGui {
 
         ImGui.end();
 
-        // Instructions panel (top-right)
-        float panelWidth = 200;
-        ImGui.setNextWindowPos(window.getWidth() - panelWidth - 10, 10, imgui.flag.ImGuiCond.Always);
-        ImGui.setNextWindowSize(panelWidth, 80, imgui.flag.ImGuiCond.Always);
-        ImGui.begin("Instructions", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
-        ImGui.text("T: Start collision test");
-        ImGui.text("ESC: Exit");
+        // ── Instructions Panel (top-right) ───────────────────────────
+        float panelWidth = 230;
+        float panelHeight = 155;
+        ImGui.setNextWindowPos(window.getWidth() - panelWidth - 10, 10, ImGuiCond.Always);
+        ImGui.setNextWindowSize(panelWidth, panelHeight, ImGuiCond.Always);
+        ImGui.begin("Controls", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+        ImGui.text("Camera:");
+        ImGui.text("  WASD       Move");
+        ImGui.text("  Q/E        Up / Down");
+        ImGui.text("  Arrow Keys Look");
+        ImGui.separator();
+        ImGui.text("Scene:");
+        ImGui.text("  T          Run collision test");
+        ImGui.text("  F          Toggle wireframe");
+        ImGui.text("  ESC        Exit");
         ImGui.end();
 
         ImGui.render();
